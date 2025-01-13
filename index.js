@@ -1,5 +1,6 @@
 const express = require('express')
 const morgan = require('morgan')
+const cors = require('cors')
 
 const app = express()
 
@@ -14,6 +15,8 @@ app.use(morgan(
     ':method :url :status :res[content-length] - :response-time ms :body'
 ))
 
+app.use(cors())
+app.use(express.static('dist'))
 
 let persons = [
     {
@@ -72,8 +75,9 @@ app.delete('/api/persons/:id', (request, response) => {
 
 const generateId = () => {
     let id
+
     do {
-        id = Math.floor(Math.random() * 100)
+        id = Math.floor(Math.random() * 1000)
     } while (persons.some(person => person.id === id))
 
     return id
