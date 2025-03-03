@@ -7,13 +7,16 @@ const app = express()
 app.use(express.json())
 // app.use(morgan('tiny'))
 
-morgan.token('body', (req, res) => {
-    return JSON.stringify(req.body)
-})
-
-app.use(morgan(
-    ':method :url :status :res[content-length] - :response-time ms :body'
-))
+app.use(morgan((tokens, req, res) => {
+    return [
+        tokens.method(req, res),
+        tokens.url(req, res),
+        tokens.status(req, res),
+        tokens.res(req, res, 'content-length'), '-',
+        tokens['response-time'](req, res), 'ms',
+        JSON.stringify(req.body)
+    ].join(' ')
+}))
 
 app.use(cors())
 app.use(express.static('dist'))
@@ -83,22 +86,20 @@ const generateId = () => {
     return id
 }
 
-const nameExists = (name) => {
+const nameExists = name => {
     return persons.some(p => p.name === name)
 }
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
 
-    if (!body.number) {
+    if (!body.number || !body.name) {
         return response.status(400).json({
-            error: 'number missing'
-        })
-    }
-
-    if (!body.name) {
-        return response.status(400).json({
-            error: 'name missing'
+            error: !body.number && !body.name
+                ? 'name and number missing'
+                : !body.name
+                    ? 'name missing'
+                    : 'number missing'
         })
     }
 
